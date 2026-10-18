@@ -3,6 +3,6 @@
 // Vedi GUIDA-CONFIGURAZIONE.md per dove trovare questi valori.
 window.RULLO_CONFIG = {
   supabaseUrl: "https://rpebswfnnxyaxekfexal.supabase.co",
-  supabaseAnonKey: "INCOLLA_QUI_LA_CHIAVE",   // Supabase → Project Settings → API Keys → chiave "publishable"
+  supabaseAnonKey: "sb_publishable_yfB8SSgVp2XniWr5-GtRkA_5t-QhI_-",   // Supabase → Project Settings → API Keys → chiave "publishable"
   stravaClientId: "288614"
 };
