@@ -8,7 +8,7 @@
 // Forniti automaticamente da Supabase:
 //   SUPABASE_URL, SUPABASE_SERVICE_ROLE_KEY
 // =====================================================================
-import { createClient } from "npm:@supabase/supabase-js@2.45.4";
+import { createClient } from "npm:@supabase/supabase-js@2.116.0";
 
 const CORS = {
   "Access-Control-Allow-Origin": "*",
@@ -18,7 +18,16 @@ const CORS = {
 const json = (body: unknown, status = 200) =>
   new Response(JSON.stringify(body), { status, headers: { ...CORS, "Content-Type": "application/json" } });
 
-const admin = createClient(Deno.env.get("SUPABASE_URL")!, Deno.env.get("SUPABASE_SERVICE_ROLE_KEY")!, {
+// Chiave server: nuove chiavi "secret" (progetti recenti) oppure la vecchia service_role
+function serverKey(): string {
+  try {
+    const keys = JSON.parse(Deno.env.get("SUPABASE_SECRET_KEYS") ?? "{}");
+    const k = keys.default ?? Object.values(keys)[0];
+    if (k) return String(k);
+  } catch { /* formato non JSON */ }
+  return Deno.env.get("SUPABASE_SERVICE_ROLE_KEY") ?? "";
+}
+const admin = createClient(Deno.env.get("SUPABASE_URL")!, serverKey(), {
   auth: { persistSession: false },
 });
 const STRAVA_ID = Deno.env.get("STRAVA_CLIENT_ID") ?? "";
@@ -134,7 +143,7 @@ Deno.serve(async (req) => {
       case "strava_connect": {
         if (!body.code) throw new HttpError(400, "codice mancante");
         const { count } = await admin.from("strava_tokens").select("user_id", { count: "exact", head: true }).neq("user_id", userId);
-        if ((count ?? 0) >= STRAVA_MAX) throw new HttpError(409, `Posti Strava esauriti (${STRAVA_MAX}/${STRAVA_MAX}): chiedi a chi gestisce Rullo di liberarne uno`);
+        if ((count ?? 0) >= STRAVA_MAX) throw new HttpError(409, `Posti Strava esauriti (${STRAVA_MAX}/${STRAVA_MAX}): chiedi a chi gestisce Sofferenza Infernale di liberarne uno`);
         const t = await stravaToken({ grant_type: "authorization_code", code: String(body.code) });
         const a = t.athlete ?? {};
         const name = [a.firstname, a.lastname].filter(Boolean).join(" ") || null;
