@@ -552,27 +552,51 @@ function cmdSimulation(gradePct){
 }
 
 /* Export TCX (compatibile con Strava/Garmin Connect) */
+/* Divide i campioni in giri (lap): un lap per ogni step del workout,
+   altrimenti un lap ogni 5 km (come l'auto-lap Garmin). */
+function splitLaps(samples){
+  const laps=[];let cur=null,key=null;
+  const isWo=samples.some(s=>s.si!==undefined&&s.si>=0);
+  for(const s of samples){
+    const k=isWo?(s.si>=0?s.si:-1):Math.floor((s.d||0)/5000);
+    if(cur===null||k!==key){cur=[];laps.push(cur);key=k;}
+    cur.push(s);
+  }
+  // niente mini-lap finale (< 30 s) fuori dal workout: lo unisco al precedente
+  if(!isWo&&laps.length>1&&laps[laps.length-1].length<30)laps[laps.length-2].push(...laps.pop());
+  return laps;
+}
+function xmlEsc(s){return String(s).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;');}
+
 function buildTCX(samples,startMs,name){
   const iso=ms=>new Date(ms).toISOString();
-  const last=samples[samples.length-1]||{t:0,d:0};
-  let sp=0,sh=0,nh=0,sc=0,nc=0,mx=0;
-  for(const s of samples){sp+=s.p||0;if(s.p>mx)mx=s.p;if(s.hr){sh+=s.hr;nh++;}if(s.c){sc+=s.c;nc++;}}
-  const avgP=samples.length?Math.round(sp/samples.length):0;
-  const kcal=Math.round(sp/1000*1.0);
   let x='<?xml version="1.0" encoding="UTF-8"?>\n';
   x+='<TrainingCenterDatabase xmlns="http://www.garmin.com/xmlschemas/TrainingCenterDatabase/v2" xmlns:ns3="http://www.garmin.com/xmlschemas/ActivityExtension/v2">\n';
   x+='<Activities><Activity Sport="Biking"><Id>'+iso(startMs)+'</Id>\n';
-  x+='<Lap StartTime="'+iso(startMs)+'"><TotalTimeSeconds>'+last.t+'</TotalTimeSeconds><DistanceMeters>'+last.d.toFixed(1)+'</DistanceMeters><Calories>'+kcal+'</Calories>';
-  if(nh)x+='<AverageHeartRateBpm><Value>'+Math.round(sh/nh)+'</Value></AverageHeartRateBpm>';
-  x+='<Intensity>Active</Intensity><TriggerMethod>Manual</TriggerMethod><Track>\n';
-  for(const s of samples){
-    x+='<Trackpoint><Time>'+iso(startMs+s.t*1000)+'</Time><DistanceMeters>'+s.d.toFixed(1)+'</DistanceMeters>';
-    if(s.hr)x+='<HeartRateBpm><Value>'+Math.round(s.hr)+'</Value></HeartRateBpm>';
-    if(s.c)x+='<Cadence>'+Math.round(s.c)+'</Cadence>';
-    x+='<Extensions><ns3:TPX><ns3:Speed>'+(s.v||0).toFixed(2)+'</ns3:Speed><ns3:Watts>'+Math.round(s.p||0)+'</ns3:Watts></ns3:TPX></Extensions></Trackpoint>\n';
+  const laps=samples.length?splitLaps(samples):[[]];
+  let prevD=0,prevT=0;
+  for(const L of laps){
+    const first=L[0]||{t:0},last=L[L.length-1]||{t:0,d:0};
+    let sp=0,sh=0,nh=0,mh=0,sc=0,nc=0,mx=0,mv=0;
+    for(const s of L){sp+=s.p||0;if(s.p>mx)mx=s.p;if((s.v||0)>mv)mv=s.v;if(s.hr){sh+=s.hr;nh++;if(s.hr>mh)mh=s.hr;}if(s.c){sc+=s.c;nc++;}}
+    const dur=Math.max(0,last.t-prevT);
+    x+='<Lap StartTime="'+iso(startMs+prevT*1000)+'"><TotalTimeSeconds>'+dur+'</TotalTimeSeconds>';
+    x+='<DistanceMeters>'+Math.max(0,(last.d||0)-prevD).toFixed(1)+'</DistanceMeters><MaximumSpeed>'+mv.toFixed(2)+'</MaximumSpeed>';
+    x+='<Calories>'+Math.round(sp/1000)+'</Calories>';
+    if(nh)x+='<AverageHeartRateBpm><Value>'+Math.round(sh/nh)+'</Value></AverageHeartRateBpm><MaximumHeartRateBpm><Value>'+Math.round(mh)+'</Value></MaximumHeartRateBpm>';
+    x+='<Intensity>Active</Intensity>';
+    if(nc)x+='<Cadence>'+Math.round(sc/nc)+'</Cadence>';
+    x+='<TriggerMethod>Manual</TriggerMethod><Track>\n';
+    for(const s of L){
+      x+='<Trackpoint><Time>'+iso(startMs+s.t*1000)+'</Time><DistanceMeters>'+(s.d||0).toFixed(1)+'</DistanceMeters>';
+      if(s.hr)x+='<HeartRateBpm><Value>'+Math.round(s.hr)+'</Value></HeartRateBpm>';
+      if(s.c)x+='<Cadence>'+Math.round(s.c)+'</Cadence>';
+      x+='<Extensions><ns3:TPX><ns3:Speed>'+(s.v||0).toFixed(2)+'</ns3:Speed><ns3:Watts>'+Math.round(s.p||0)+'</ns3:Watts></ns3:TPX></Extensions></Trackpoint>\n';
+    }
+    x+='</Track><Extensions><ns3:LX><ns3:AvgWatts>'+(L.length?Math.round(sp/L.length):0)+'</ns3:AvgWatts><ns3:MaxWatts>'+Math.round(mx)+'</ns3:MaxWatts></ns3:LX></Extensions></Lap>\n';
+    prevD=last.d||0;prevT=last.t;
   }
-  x+='</Track><Extensions><ns3:LX><ns3:AvgWatts>'+avgP+'</ns3:AvgWatts><ns3:MaxWatts>'+Math.round(mx)+'</ns3:MaxWatts></ns3:LX></Extensions></Lap>\n';
-  x+='<Notes>'+(name||'Sofferenza Infernale')+'</Notes></Activity></Activities></TrainingCenterDatabase>\n';
+  x+='<Notes>'+xmlEsc(name||'Sofferenza Infernale')+'</Notes></Activity></Activities></TrainingCenterDatabase>\n';
   return x;
 }
 
