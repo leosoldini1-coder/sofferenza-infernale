@@ -61,6 +61,39 @@ dialog::backdrop{background:rgba(0,0,0,.6)}
 .up .okk{border-color:#2f7a55;color:var(--ok)} .up .ko{border-color:#7a2f2f;color:var(--bad)}
 #histBody a{color:var(--txt)}
 @media(max-width:560px){.grid2{grid-template-columns:1fr}}
+/* ===== Calendario ===== */
+.cal{background:var(--card);border:1px solid var(--line);border-radius:14px;padding:12px}
+.calhead{display:flex;align-items:center;gap:8px;flex-wrap:wrap;margin-bottom:10px}
+.calhead b{font-size:17px;min-width:150px;text-align:center;text-transform:capitalize}
+.calhead button{padding:6px 12px}
+.calgrid{display:grid;grid-template-columns:repeat(7,1fr) 92px;gap:4px}
+.calgrid .dh{color:var(--mut);font-size:11px;text-transform:uppercase;letter-spacing:.6px;text-align:center;padding:2px 0}
+.cday{min-height:74px;background:var(--card2);border:1px solid var(--line);border-radius:10px;padding:5px 6px;cursor:pointer;display:flex;flex-direction:column;gap:3px;overflow:hidden}
+.cday:hover{border-color:var(--mut)}
+.cday.out{opacity:.35}
+.cday.today{border-color:var(--acc)}
+.cday.sel{outline:2px solid var(--acc);outline-offset:-1px}
+.cday .n{font-size:12px;color:var(--mut)}
+.cday.today .n{color:var(--acc);font-weight:800}
+.pill{font-size:11px;font-weight:700;border-radius:6px;padding:2px 5px;color:#0b0f16;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;font-variant-numeric:tabular-nums}
+.cweek{background:transparent;border:1px dashed var(--line);border-radius:10px;padding:5px 6px;font-size:12px;color:var(--mut);display:flex;flex-direction:column;justify-content:center;font-variant-numeric:tabular-nums}
+.cweek b{color:var(--txt);font-size:13px}
+.cdetail{margin-top:12px}
+.scard{background:var(--card2);border:1px solid var(--line);border-radius:12px;padding:10px 12px;margin-top:8px}
+.scard .t{font-weight:700}
+.scard .m{color:var(--mut);font-size:13px;margin-top:2px;font-variant-numeric:tabular-nums}
+.scard .row{margin-top:8px}
+.scard button{padding:6px 12px;font-size:13px}
+.legend{display:flex;gap:10px;flex-wrap:wrap;font-size:12px;color:var(--mut);margin-top:8px}
+.legend i{display:inline-block;width:10px;height:10px;border-radius:3px;margin-right:4px;vertical-align:-1px}
+#recBanner{background:#13324a;border-color:#2b5d84;color:#d6ecff}
+#recBanner button{margin:6px 6px 0 0}
+@media(max-width:620px){
+  .calgrid{grid-template-columns:repeat(7,1fr)}
+  .calgrid .dh.wk,.cweek{display:none}
+  .cday{min-height:52px;padding:4px}
+  .pill{font-size:10px;padding:1px 3px}
+}
 label.f{flex-wrap:wrap;max-width:100%}
 
 /* ===== Vista pedalata stile Zwift ===== */
@@ -168,6 +201,7 @@ tr:last-child td{border-bottom:0}
   <span class="chip" id="stHr"><i></i><span>FC: non collegata</span></span>
 </div>
 <div class="banner" id="btWarn" style="display:none"></div>
+<div class="banner" id="recBanner" style="display:none"></div>
 
 <div class="tabs">
   <div class="tab on" data-mode="workout">Workout ERG</div>
@@ -298,6 +332,26 @@ tr:last-child td{border-bottom:0}
     <thead><tr><th>Data</th><th>Allenamento</th><th>Durata</th><th>Km</th><th>W medi</th><th>NP</th><th>FC</th><th>TSS</th><th>Inviata a</th></tr></thead>
     <tbody id="histBody"></tbody>
   </table></div>
+</div>
+
+<div id="calBox">
+  <h3>Calendario allenamenti</h3>
+  <div class="cal">
+    <div class="calhead">
+      <button id="calPrev">◀</button><b id="calTitle"></b><button id="calNext">▶</button>
+      <button id="calToday">Oggi</button>
+      <span class="hint" id="calInfo" style="margin:0 0 0 auto"></span>
+    </div>
+    <div class="calgrid" id="calGrid"></div>
+    <div class="legend">
+      <span><i style="background:#4aa3ff"></i>Facile (IF &lt; 0,75)</span>
+      <span><i style="background:#3ddc97"></i>Medio (0,75–0,85)</span>
+      <span><i style="background:#ffd23f"></i>Impegnativo (0,85–0,95)</span>
+      <span><i style="background:#ff5d5d"></i>Molto duro (≥ 0,95)</span>
+    </div>
+    <div class="cdetail" id="calDetail"></div>
+  </div>
+  <p class="hint">Le sessioni vengono salvate automaticamente su questo dispositivo alla fine di ogni allenamento, anche senza accesso.</p>
 </div>
 
 <!-- ===== Accesso ===== -->
@@ -986,6 +1040,7 @@ function startSession(){
   if(S.mode==='route'&&!S.route){msg('Scegli un percorso.');return;}
   if(!S.demo&&!BT.trainerOn&&!confirm('Trainer non collegato. Avviare comunque (senza dati)?'))return;
   try{audio=audio||new (window.AudioContext||window.webkitAudioContext)();audio.resume();}catch(e){}
+  lastAutoAt=0;
   Object.assign(S,{rowId:null,running:true,elapsed:0,dist:0,v:0,asc:0,samples:[],nextSample:1,startMs:Date.now(),saved:false,
     lastTarget:null,lastTargetSent:-1,lastGradeSent:null,ergMult:1,curStep:-1,beeped:-1,stats:null});
   S.stepAcc=S.wo.steps.map(()=>({n:0,sp:0,sh:0,nh:0,mh:0,sc:0,nc:0,st:0}));
@@ -1013,7 +1068,8 @@ function finishSession(auto){
     el.innerHTML='<span class="big">'+(auto?'Allenamento completato! ':'Sessione terminata. ')+'</span><br>'
       +'Tempo <b>'+fmtTime(S.elapsed)+'</b> · Distanza <b>'+(S.dist/1000).toFixed(1)+' km</b> · Potenza media <b>'+Math.round(st.avgP)+' W</b> · NP <b>'+Math.round(st.np)+' W</b>'
       +(st.avgHr?' · FC media <b>'+Math.round(st.avgHr)+' bpm</b>':'')+' · <b>'+Math.round(st.kj)+' kJ</b>'
-      +'<br><span style="color:var(--mut)">'+(Cloud.user?'Salvata nel tuo storico. Il .tcx resta scaricabile per Garmin Connect.':'Scarica il .tcx e caricalo su Strava, Garmin Connect o Intervals.icu.')+'</span>';
+      +'<br><span style="color:var(--mut)">✓ Salvata nel calendario di questo dispositivo. '+(Cloud.user?'Il .tcx resta scaricabile per Garmin Connect.':'Fai l\'accesso per l\'invio automatico a Strava, oppure scarica il .tcx.')+'</span>';
+    Store.saveCurrent().then(s=>{if(s){const d=new Date(s.startMs);Cal.y=d.getFullYear();Cal.m=d.getMonth();Cal.sel=dayKey(d);}renderCalendar();});
     afterRide();
   }
 }
@@ -1044,7 +1100,7 @@ function demoStep(dt){
 }
 
 /* ---- loop dati ---- */
-let lastTick=performance.now(),lastStatsAt=0;
+let lastTick=performance.now(),lastStatsAt=0,lastAutoAt=0;
 function update(){
   const now=performance.now();
   const dt=Math.min(3,(now-lastTick)/1000);lastTick=now;
@@ -1091,6 +1147,7 @@ function update(){
       S.nextSample++;
     }
     if(now-lastStatsAt>1000){lastStatsAt=now;renderStats();renderIntervals();}
+    if(!lastAutoAt||now-lastAutoAt>10000){lastAutoAt=now;Store.saveLive();}
   }else{
     S.lastTarget=null;
     if(!S.histT||now-S.histT>1000){S.histT=now;S.hist.push(P);}
@@ -1531,6 +1588,7 @@ async function sendActivity(targets,rowId){
     const res=await Cloud.call('upload',{tcx:buildTCX(S.samples,S.startMs,sessionName()),name:sessionName(),
       description:'Allenamento indoor con Sofferenza Infernale 🔥',external_id:'rullo-'+(Cloud.user?Cloud.user.id.slice(0,8):'x')+'-'+S.startMs,targets,activity_row_id:rowId||S.rowId||null});
     box.innerHTML=upTag('Strava',res.strava,'https://www.strava.com/activities/')+upTag('Intervals.icu',res.icu,'https://intervals.icu/activities/');
+    Store.markUploaded(S.startMs,res);
     if((res.strava&&res.strava.ok)||(res.icu&&res.icu.ok))S.saved=true;
     loadHistory();
   }catch(e){box.innerHTML='<span class="tag ko">✗ '+esc(e.message)+'</span>';}
@@ -1600,6 +1658,196 @@ function initCloudUi(){
       location.href=Cloud.stravaAuthUrl();
     }
   });
+}
+
+/* ===== Archivio locale (IndexedDB): sessioni finite + sessione in corso ===== */
+function packSamples(sm){
+  const o={t:[],p:[],c:[],hr:[],d:[],v:[],si:[]};
+  for(const s of sm){o.t.push(s.t);o.p.push(Math.round(s.p||0));o.c.push(Math.round(s.c||0));o.hr.push(Math.round(s.hr||0));
+    o.d.push(Math.round((s.d||0)*10)/10);o.v.push(Math.round((s.v||0)*100)/100);o.si.push(s.si===undefined?-1:s.si);}
+  return o;
+}
+function unpackSamples(o){
+  const a=[];if(!o||!o.t)return a;
+  for(let i=0;i<o.t.length;i++)a.push({t:o.t[i],p:o.p[i],c:o.c[i],hr:o.hr[i],d:o.d[i],v:o.v[i],si:o.si[i]});
+  return a;
+}
+function sessionSummary(sm,ftp,elapsed){
+  const st=statsOf(sm),IF=ftp?st.np/ftp:0;
+  return {avgP:Math.round(st.avgP),np:Math.round(st.np),maxP:Math.round(st.maxP),avgHr:Math.round(st.avgHr)||0,maxHr:Math.round(st.maxHr)||0,
+    avgCad:Math.round(st.avgCad)||0,kj:Math.round(st.kj),IF:Math.round(IF*100)/100,
+    tss:st.n>=60?Math.round(st.n*st.np*IF/(ftp*3600)*100):0,dur:Math.round(elapsed||st.n)};
+}
+
+const Store={
+  db:null,ok:true,
+  open(){
+    return new Promise((ok,ko)=>{
+      if(!('indexedDB' in window))return ko(new Error('IndexedDB non disponibile'));
+      const r=indexedDB.open('sofferenza',1);
+      r.onupgradeneeded=()=>{const d=r.result;
+        if(!d.objectStoreNames.contains('sessions'))d.createObjectStore('sessions',{keyPath:'id'});
+        if(!d.objectStoreNames.contains('live'))d.createObjectStore('live',{keyPath:'k'});};
+      r.onsuccess=()=>ok(r.result);r.onerror=()=>ko(r.error);
+    });
+  },
+  async tx(store,mode,fn){
+    if(!this.db)this.db=await this.open();
+    return new Promise((ok,ko)=>{
+      const t=this.db.transaction(store,mode),q=fn(t.objectStore(store));let res;
+      if(q)q.onsuccess=()=>{res=q.result;};
+      t.oncomplete=()=>ok(res);t.onerror=()=>ko(t.error);t.onabort=()=>ko(t.error);
+    });
+  },
+  put(st,v){return this.tx(st,'readwrite',s=>s.put(v));},
+  get(st,k){return this.tx(st,'readonly',s=>s.get(k));},
+  all(st){return this.tx(st,'readonly',s=>s.getAll());},
+  del(st,k){return this.tx(st,'readwrite',s=>s.delete(k));},
+
+  snapshot(){
+    return {id:S.startMs,startMs:S.startMs,name:sessionName(),mode:S.mode,elapsed:Math.round(S.elapsed),
+      dist:Math.round(S.dist),asc:Math.round(S.asc),ftp:S.ftp,woText:S.mode==='workout'?$('woText').value:'',
+      stats:sessionSummary(S.samples,S.ftp,S.elapsed),data:packSamples(S.samples),uploaded:{},savedAt:Date.now()};
+  },
+  async saveLive(){
+    if(!S.running||!S.samples.length)return;
+    try{await this.put('live',{k:'current',...this.snapshot()});}catch(e){console.warn('autosave',e);}
+  },
+  async saveCurrent(){
+    if(S.samples.length<60){try{await this.del('live','current');}catch(e){}return null;}  // prove < 1 minuto: non in calendario
+    const s=this.snapshot();
+    try{
+      const old=await this.get('sessions',s.id);if(old&&old.uploaded)s.uploaded=old.uploaded;
+      await this.put('sessions',s);await this.del('live','current');S.saved=true;return s;
+    }catch(e){msg('Salvataggio nel calendario non riuscito: '+(e.message||e));return null;}
+  },
+  async markUploaded(id,res){
+    try{
+      const s=await this.get('sessions',id);if(!s)return;
+      s.uploaded=s.uploaded||{};
+      if(res.strava&&res.strava.ok&&res.strava.activity_id)s.uploaded.strava=res.strava.activity_id;
+      if(res.icu&&res.icu.ok&&res.icu.activity_id)s.uploaded.icu=res.icu.activity_id;
+      await this.put('sessions',s);renderCalendar();
+    }catch(e){}
+  }
+};
+
+/* Recupero di una sessione interrotta (pagina chiusa/ricaricata durante la pedalata) */
+async function checkRecovery(){
+  let live=null;
+  try{live=await Store.get('live','current');}catch(e){return;}
+  if(!live||!live.data||live.data.t.length<30)return;
+  const b=$('recBanner'),d=new Date(live.startMs);
+  b.innerHTML='<b>Trovata una sessione non terminata</b> del '+d.toLocaleDateString('it-CH',{day:'numeric',month:'short'})+' alle '
+    +d.toLocaleTimeString('it-CH',{hour:'2-digit',minute:'2-digit'})+': '+fmtTime(live.stats.dur)+', '+live.stats.avgP+' W medi, '+(live.dist/1000).toFixed(1)+' km.'
+    +'<br><button id="recSave" class="primary">Salva nel calendario</button><button id="recDrop">Scarta</button>';
+  b.style.display='block';
+  $('recSave').onclick=async()=>{
+    const s={...live};delete s.k;s.savedAt=Date.now();s.recovered=true;
+    await Store.put('sessions',s);await Store.del('live','current');
+    b.style.display='none';msg('Sessione recuperata e salvata nel calendario.');
+    Cal.y=d.getFullYear();Cal.m=d.getMonth();Cal.sel=dayKey(d);renderCalendar();
+    $('calBox').scrollIntoView({behavior:'smooth'});
+  };
+  $('recDrop').onclick=async()=>{
+    if($('recDrop').dataset.c!=='1'){$('recDrop').dataset.c='1';$('recDrop').textContent='Sicuro? Clicca di nuovo';return;}
+    await Store.del('live','current');b.style.display='none';
+  };
+}
+
+/* ===== Calendario ===== */
+const Cal={y:new Date().getFullYear(),m:new Date().getMonth(),sel:null,list:[]};
+function dayKey(d){const p=n=>String(n).padStart(2,'0');return d.getFullYear()+'-'+p(d.getMonth()+1)+'-'+p(d.getDate());}
+function ifColor(IF){return IF>=0.95?'#ff5d5d':IF>=0.85?'#ffd23f':IF>=0.75?'#3ddc97':'#4aa3ff';}
+function hm(sec){sec=Math.round(sec||0);const h=Math.floor(sec/3600),m=Math.floor(sec%3600/60);return h?h+'h'+String(m).padStart(2,'0'):m+"'";}
+
+async function renderCalendar(){
+  try{Cal.list=await Store.all('sessions');}catch(e){$('calInfo').textContent='Archivio non disponibile in questo browser.';return;}
+  const byDay={};
+  for(const s of Cal.list){const k=dayKey(new Date(s.startMs));(byDay[k]=byDay[k]||[]).push(s);}
+  for(const k in byDay)byDay[k].sort((a,b)=>a.startMs-b.startMs);
+  const first=new Date(Cal.y,Cal.m,1),start=new Date(first);
+  start.setDate(1-((first.getDay()+6)%7));
+  $('calTitle').textContent=first.toLocaleDateString('it-CH',{month:'long',year:'numeric'});
+  const today=dayKey(new Date());
+  let h='';['Lun','Mar','Mer','Gio','Ven','Sab','Dom'].forEach(d=>h+='<div class="dh">'+d+'</div>');h+='<div class="dh wk">Settimana</div>';
+  const cur=new Date(start);let monthSec=0,monthTss=0,monthN=0;
+  for(let w=0;w<6;w++){
+    let wSec=0,wTss=0,wKm=0;
+    for(let i=0;i<7;i++){
+      const k=dayKey(cur),ss=byDay[k]||[],out=cur.getMonth()!==Cal.m;
+      let pills='';
+      for(const s of ss){
+        pills+='<div class="pill" style="background:'+ifColor(s.stats.IF)+'" title="'+esc(s.name)+'">'+hm(s.stats.dur)+(s.stats.tss?' · '+s.stats.tss:'')+'</div>';
+        wSec+=s.stats.dur;wTss+=s.stats.tss;wKm+=s.dist/1000;
+        if(!out){monthSec+=s.stats.dur;monthTss+=s.stats.tss;monthN++;}
+      }
+      h+='<div class="cday'+(out?' out':'')+(k===today?' today':'')+(k===Cal.sel?' sel':'')+'" data-k="'+k+'"><span class="n">'+cur.getDate()+'</span>'+pills+'</div>';
+      cur.setDate(cur.getDate()+1);
+    }
+    h+='<div class="cweek">'+(wSec?'<b>'+hm(wSec)+'</b>TSS '+wTss+'<br>'+wKm.toFixed(0)+' km':'—')+'</div>';
+    if(cur.getMonth()!==Cal.m&&cur>first)break;
+  }
+  $('calGrid').innerHTML=h;
+  $('calInfo').textContent=monthN?monthN+' uscite · '+hm(monthSec)+' · TSS '+monthTss:'Nessuna uscita in questo mese';
+  document.querySelectorAll('.cday').forEach(c=>c.onclick=()=>{Cal.sel=c.dataset.k;renderCalendar();});
+  renderDayDetail(byDay[Cal.sel]||[]);
+}
+
+function renderDayDetail(ss){
+  const box=$('calDetail');
+  if(!Cal.sel){box.innerHTML='<p class="hint">Clicca un giorno per vedere le sessioni.</p>';return;}
+  const d=new Date(Cal.sel+'T12:00:00');
+  let h='<b>'+d.toLocaleDateString('it-CH',{weekday:'long',day:'numeric',month:'long'})+'</b>';
+  if(!ss.length)h+='<p class="hint">Nessuna sessione registrata.</p>';
+  for(const s of ss){
+    const st=s.stats,t=new Date(s.startMs).toLocaleTimeString('it-CH',{hour:'2-digit',minute:'2-digit'});
+    const up=s.uploaded||{};
+    const canSend=Cloud.user&&Cloud.strava.connected;
+    h+='<div class="scard" data-id="'+s.id+'"><div class="t">'+esc(s.name.replace(/^(Rullo|Sofferenza Infernale) · /,''))+(s.recovered?' <span class="hint">(recuperata)</span>':'')+'</div>'
+      +'<div class="m">'+t+' · '+fmtTime(st.dur)+' · '+(s.dist/1000).toFixed(1)+' km · '+st.avgP+' W medi · NP '+st.np+' W · IF '+st.IF.toFixed(2)+' · TSS '+st.tss+' · '+st.kj+' kJ'
+      +(st.avgHr?' · FC '+st.avgHr+'/'+st.maxHr:'')+(st.avgCad?' · '+st.avgCad+' rpm':'')+'</div>'
+      +'<div class="row">'
+      +'<button data-a="tcx">Scarica .tcx</button>'
+      +(up.strava?'<a class="hint" style="margin:0" target="_blank" rel="noopener" href="https://www.strava.com/activities/'+up.strava+'">✓ su Strava</a>'
+        :(canSend?'<button data-a="strava" class="primary">Invia a Strava</button>':'<span class="hint" style="margin:0">Accedi e collega Strava per inviarla</span>'))
+      +(Cloud.user&&Cloud.profile&&Cloud.profile.icu_api_key&&!up.icu?'<button data-a="icu">Invia a Intervals.icu</button>':'')
+      +'<button data-a="del" class="danger">Elimina</button><span class="hint" data-r style="margin:0"></span></div></div>';
+  }
+  box.innerHTML=h;
+  box.querySelectorAll('.scard button').forEach(btn=>btn.onclick=()=>sessionAction(+btn.closest('.scard').dataset.id,btn.dataset.a,btn));
+}
+
+async function sessionAction(id,a,btn){
+  const s=Cal.list.find(x=>x.id===id);if(!s)return;
+  const out=btn.closest('.scard').querySelector('[data-r]');
+  const tcx=()=>buildTCX(unpackSamples(s.data),s.startMs,s.name);
+  if(a==='tcx'){
+    const blob=new Blob([tcx()],{type:'application/vnd.garmin.tcx+xml'}),el=document.createElement('a'),d=new Date(s.startMs),p=n=>String(n).padStart(2,'0');
+    el.href=URL.createObjectURL(blob);el.download='sofferenza_'+d.getFullYear()+p(d.getMonth()+1)+p(d.getDate())+'_'+p(d.getHours())+p(d.getMinutes())+'.tcx';
+    document.body.appendChild(el);el.click();el.remove();setTimeout(()=>URL.revokeObjectURL(el.href),5000);
+  }else if(a==='strava'||a==='icu'){
+    btn.disabled=true;out.textContent='Invio…';
+    try{
+      const res=await Cloud.call('upload',{tcx:tcx(),name:s.name,description:'Allenamento indoor con Sofferenza Infernale 🔥',
+        external_id:'rullo-'+(Cloud.user?Cloud.user.id.slice(0,8):'x')+'-'+s.startMs,targets:[a]});
+      const r=res[a];
+      out.textContent=r&&r.ok?'✓ inviata'+(r.duplicate?' (era già presente)':''):'✗ '+((r&&r.error)||'errore');
+      await Store.markUploaded(id,res);
+    }catch(e){out.textContent='✗ '+e.message;btn.disabled=false;}
+  }else if(a==='del'){
+    if(btn.dataset.c!=='1'){btn.dataset.c='1';btn.textContent='Sicuro? Clicca di nuovo';return;}
+    await Store.del('sessions',id);renderCalendar();
+  }
+}
+
+function initCalendar(){
+  $('calPrev').onclick=()=>{Cal.m--;if(Cal.m<0){Cal.m=11;Cal.y--;}renderCalendar();};
+  $('calNext').onclick=()=>{Cal.m++;if(Cal.m>11){Cal.m=0;Cal.y++;}renderCalendar();};
+  $('calToday').onclick=()=>{const n=new Date();Cal.y=n.getFullYear();Cal.m=n.getMonth();Cal.sel=dayKey(n);renderCalendar();};
+  Cal.sel=dayKey(new Date());
+  renderCalendar();checkRecovery();
+  if(navigator.storage&&navigator.storage.persist)navigator.storage.persist().catch(()=>{});
 }
 
 /* ---- modalità ---- */
@@ -1696,7 +1944,8 @@ function init(){
   });
   readInputs(true);
   renderStats();renderIntervals();
-  initCloudUi();Cloud.init();
+  initCloudUi();Cloud.init().then(()=>renderCalendar()).catch(()=>{});
+  initCalendar();
   setInterval(update,250);
   requestAnimationFrame(draw);
 }
