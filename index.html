@@ -48,6 +48,48 @@ input[type=file]{max-width:100%;min-width:0}
 .av{width:24px;height:24px;border-radius:50%;background:var(--acc);color:#fff;display:inline-flex;align-items:center;justify-content:center;font-weight:800;font-size:12px}
 dialog{background:var(--card);color:var(--txt);border:1px solid var(--line);border-radius:16px;padding:0;width:min(560px,calc(100vw - 32px));max-height:calc(100vh - 32px)}
 dialog::backdrop{background:rgba(0,0,0,.6)}
+/* ===== Libreria workout ===== */
+.wocur{margin-top:2px}
+.wotitle{display:flex;flex-direction:column;min-width:0}
+.wotitle b{font-size:16px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.woprof{margin-top:10px}
+.woprof svg,.libdet svg.big{width:100%;height:120px;display:block;border-radius:12px;background:#0a0e14;border:1px solid var(--line)}
+.zbar{display:flex;height:8px;border-radius:4px;overflow:hidden;margin-top:6px;background:#2a3443}
+.zbar i{display:block;height:100%}
+#woEdit{margin-top:10px;background:var(--card2);border:1px solid var(--line);border-radius:12px;padding:8px 12px}
+#woEdit summary{cursor:pointer;color:#cfd8e3;font-size:14px}
+#dlgLib{width:min(1120px,calc(100vw - 24px));max-height:calc(100vh - 24px)}
+.lib{padding:16px}
+.libhead{display:flex;align-items:center;gap:10px;flex-wrap:wrap}
+.libhead h2{margin:0;font-size:20px;flex:1}
+.libhead input{width:min(260px,100%)}
+.libtabs{display:flex;gap:6px;flex-wrap:wrap;align-items:center;margin:12px 0}
+.libtabs button{border-radius:99px;padding:6px 14px;font-size:14px}
+.libtabs button.on{background:var(--acc);border-color:var(--acc);color:#fff;font-weight:700}
+.libgrid{display:grid;grid-template-columns:repeat(auto-fill,minmax(230px,1fr));gap:10px}
+.wcard{background:var(--card2);border:1px solid var(--line);border-radius:14px;padding:10px 12px;cursor:pointer;transition:border-color .15s,transform .15s;min-width:0}
+.wcard:hover{border-color:var(--acc);transform:translateY(-2px)}
+.wcard.cur{border-color:var(--ok)}
+.wcard .nm{font-weight:700;font-size:14px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.wcard svg{width:100%;height:58px;display:block;border-radius:8px;background:#0a0e14;margin:7px 0 6px}
+.wcard .mt{display:flex;gap:10px;color:#cfd8e3;font-size:12px;font-variant-numeric:tabular-nums}
+.wcard .mt b{color:#fff}
+.badge{display:inline-block;font-size:11px;font-weight:700;padding:1px 8px;border-radius:99px;background:#2a3443;color:#cfd8e3;margin-right:6px;vertical-align:1px}
+.badge.today{background:var(--acc);color:#fff}
+.badge.ic{background:#16324d;color:#8fc7ff}
+.libsec{margin:14px 0 6px;color:var(--mut);font-size:12px;text-transform:uppercase;letter-spacing:.8px}
+.libempty{color:var(--mut);padding:20px 0;text-align:center}
+.libdet .top{display:flex;align-items:center;gap:10px;flex-wrap:wrap;margin-bottom:10px}
+.libdet .top h3{margin:0;font-size:18px;color:#fff;flex:1;min-width:200px}
+.libdet .kp{display:grid;grid-template-columns:repeat(auto-fit,minmax(110px,1fr));gap:8px;margin:10px 0}
+.libdet .kp div{background:var(--card2);border:1px solid var(--line);border-radius:10px;padding:6px 10px}
+.libdet .kp span{display:block;color:var(--mut);font-size:11px;text-transform:uppercase;letter-spacing:.6px}
+.libdet .kp b{font-size:20px;font-variant-numeric:tabular-nums}
+.libdet .note{color:#cfd8e3;font-size:13px;margin:6px 0 0}
+.steps{max-height:300px;overflow:auto;border:1px solid var(--line);border-radius:12px;margin-top:10px}
+.steps table td,.steps table th{padding:5px 10px}
+.steps .sw{display:inline-block;width:10px;height:10px;border-radius:3px;margin-right:6px;vertical-align:-1px}
+@media(max-width:560px){.libgrid{grid-template-columns:1fr 1fr}.wcard svg{height:44px}.wcard .mt{flex-wrap:wrap;gap:4px 8px}}
 .dlg{padding:18px}
 .dlg h2{margin:0 0 6px;font-size:20px}
 .grid2{display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-top:10px}
@@ -230,14 +272,23 @@ tr:last-child td{border-bottom:0}
     </div>
     <div class="hint" id="icuMsg"></div>
   </div>
-  <div class="row">
-    <select id="preset"></select>
-    <span id="woInfo" class="hint" style="margin:0"></span>
-    <label class="f" style="margin-left:auto">Strada <select id="woRoute"></select></label>
+  <div class="wocur">
+    <div class="row">
+      <button id="btnLib" class="primary">📚 Libreria workout</button>
+      <div class="wotitle"><b id="woName">—</b><span id="woInfo" class="hint" style="margin:0"></span></div>
+      <label class="f" style="margin-left:auto">Strada <select id="woRoute"></select></label>
+    </div>
+    <div id="woProfile" class="woprof"></div>
+    <div class="zbar" id="woZones"></div>
   </div>
-  <textarea id="woText" spellcheck="false" style="margin-top:8px"></textarea>
-  <div class="err" id="woErr"></div>
-  <p class="hint">Formato: una riga per step, <code>durata potenza</code>. Durata <code>10m</code> o <code>30s</code>; potenza in % FTP (<code>85%</code>), rampa (<code>10m 50-75%</code>) o watt (<code>200w</code>). Ripetute: <code>5x[3m 118%, 3m 50%]</code>. Righe con # = commenti.</p>
+  <details id="woEdit">
+    <summary>✏️ Modifica o scrivi un workout</summary>
+    <select id="preset" hidden></select>
+    <textarea id="woText" spellcheck="false" style="margin-top:8px"></textarea>
+    <div class="err" id="woErr"></div>
+    <div class="row" style="margin-top:6px"><button id="btnLibSave">💾 Salva nella libreria</button><span class="hint" id="libSaveMsg" style="margin:0"></span></div>
+    <p class="hint">Formato: una riga per step, <code>durata potenza</code>. Durata <code>10m</code> o <code>30s</code>; potenza in % FTP (<code>85%</code>), rampa (<code>10m 50-75%</code>) o watt (<code>200w</code>). Ripetute: <code>5x[3m 118%, 3m 50%]</code>. La prima riga <code># Nome</code> è il titolo.</p>
+  </details>
 </div>
 
 <div class="panel" id="p-route">
@@ -353,6 +404,25 @@ tr:last-child td{border-bottom:0}
   </div>
   <p class="hint">Le sessioni vengono salvate automaticamente su questo dispositivo alla fine di ogni allenamento, anche senza accesso.</p>
 </div>
+
+<!-- ===== Libreria workout ===== -->
+<dialog id="dlgLib">
+  <div class="lib">
+    <div class="libhead">
+      <h2>📚 Libreria workout</h2>
+      <input id="libSearch" type="search" placeholder="Cerca…">
+      <button id="libClose" aria-label="Chiudi">✕</button>
+    </div>
+    <div class="libtabs" id="libTabs">
+      <button data-t="planned">📅 Pianificati</button>
+      <button data-t="mine">⭐ I miei</button>
+      <button data-t="preset">🔥 Preimpostati</button>
+      <button data-t="all">Tutti</button>
+      <span class="hint" id="libSort" style="margin:0 0 0 auto">FTP <b id="libFtp"></b> W</span>
+    </div>
+    <div id="libBody"></div>
+  </div>
+</dialog>
 
 <!-- ===== Accesso ===== -->
 <dialog id="dlgLogin">
@@ -751,6 +821,47 @@ function fmtTime(s){
   return h?h+':'+p(m)+':'+p(sec):m+':'+p(sec);
 }
 
+/* ===== Profili workout (stile Zwift) e stime ===== */
+function woTitle(text,fallback){const m=/^\s*#\s*(.+)$/m.exec(text||'');return m?m[1].trim():(fallback||'Workout');}
+
+// Stima durata, NP, IF, TSS e tempo per zona di un workout parsato
+function woEstimate(wo,ftp){
+  const z=[0,0,0,0,0,0,0];let s4=0,n=0;
+  for(const s of wo.steps){
+    const k=Math.max(1,Math.round(s.dur/5));
+    for(let i=0;i<k;i++){
+      const dt=s.dur/k,p=s.p0+(s.p1-s.p0)*((i+0.5)/k);
+      s4+=Math.pow(p,4)*dt;n+=dt;z[zoneOf(p,ftp)-1]+=dt;
+    }
+  }
+  const np=n?Math.pow(s4/n,0.25):0,IF=ftp?np/ftp:0;
+  return {dur:wo.total,np:Math.round(np),IF:Math.round(IF*100)/100,tss:Math.round(wo.total*np*IF/(ftp*3600)*100)||0,zones:z};
+}
+
+// Profilo SVG: blocchi colorati per zona, rampe a gradini sfumati come in Zwift
+function profileSVG(wo,ftp,opt){
+  opt=opt||{};const W=1000,H=opt.h||120,pad=opt.ftpLine?14:4;
+  if(!wo.steps.length)return '<svg viewBox="0 0 '+W+' '+H+'" preserveAspectRatio="none"></svg>';
+  const mx=Math.max(ftp*1.25,...wo.steps.map(s=>Math.max(s.p0,s.p1)*1.06));
+  const X=t=>t/wo.total*W,Y=p=>H-Math.max(2,p/mx*(H-pad));
+  let g='';
+  for(const s of wo.steps){
+    const ramp=s.p0!==s.p1,k=ramp?Math.max(4,Math.min(24,Math.round(s.dur/30))):1;
+    for(let i=0;i<k;i++){
+      const a=s.start+s.dur*i/k,b=s.start+s.dur*(i+1)/k;
+      const pa=s.p0+(s.p1-s.p0)*i/k,pb=s.p0+(s.p1-s.p0)*(i+1)/k,pm=(pa+pb)/2;
+      const x0=X(a).toFixed(1),x1=(X(b)+(i<k-1?0.6:0)).toFixed(1);
+      g+='<path d="M'+x0+' '+H+'L'+x0+' '+Y(ramp?pa:pm).toFixed(1)+'L'+x1+' '+Y(ramp?pb:pm).toFixed(1)+'L'+x1+' '+H+'Z" fill="'+ZONE_COLORS[zoneOf(pm,ftp)-1]+'"/>';
+    }
+    if(!ramp&&opt.gaps!==false)g+='<line x1="'+X(s.start).toFixed(1)+'" y1="'+H+'" x2="'+X(s.start).toFixed(1)+'" y2="'+Y(s.p0).toFixed(1)+'" stroke="#0a0e14" stroke-width="1.5"/>';
+  }
+  if(opt.ftpLine){
+    const y=Y(ftp).toFixed(1);
+    g+='<line x1="0" y1="'+y+'" x2="'+W+'" y2="'+y+'" stroke="#ffffff" stroke-opacity=".55" stroke-dasharray="6 6" stroke-width="1.5" vector-effect="non-scaling-stroke"/>';
+  }
+  return '<svg viewBox="0 0 '+W+' '+H+'" preserveAspectRatio="none" role="img" aria-label="Profilo del workout">'+g+'</svg>';
+}
+
 const PRESETS={
   "Z2 resistenza 60'":"# Endurance\n5m 45-65%\n50m 65%\n5m 60-45%",
   "Sub-soglia 3x10'":"# Blocchi sub-soglia\n10m 50-75%\n3x[10m 90%, 5m 55%]\n8m 50%",
@@ -890,6 +1001,7 @@ function parseWo(){
   const nWork=S.wo.steps.filter(s=>s.work).length;
   $('woInfo').textContent=S.wo.steps.length?(S.wo.steps.length+' step · '+nWork+' intervalli · '+fmtTime(S.wo.total)):'';
   if(!S.running)renderIntervals();
+  if(typeof renderWoProfile==='function')renderWoProfile();
 }
 
 /* ---- Intervals.icu ---- */
@@ -898,10 +1010,12 @@ function icuCfg(){try{return JSON.parse(localStorage.getItem('rullo_icu')||'{}')
 function icuMsg(t,bad){const el=$('icuMsg');el.textContent=t||'';el.style.color=bad?'var(--bad)':'';}
 function isoLocal(d){const p=n=>String(n).padStart(2,'0');return d.getFullYear()+'-'+p(d.getMonth()+1)+'-'+p(d.getDate());}
 
-function applyImported(res,src){
+function applyImported(res,src,meta){
   if(S.running){icuMsg('Termina la sessione prima di caricare un altro workout.',true);return;}
   $('woText').value=res.text;$('preset').value='';
   readInputs();
+  meta=meta||{};
+  Lib.add({id:meta.id,name:res.name||woTitle(res.text,src),text:res.text,source:meta.source||'file',date:meta.date||null});
   const w=res.warn&&res.warn.length?' ('+[...new Set(res.warn)].join(', ')+')':'';
   icuMsg('Caricato: '+(res.name||src)+' · '+S.wo.steps.length+' step · '+fmtTime(S.wo.total)+w);
 }
@@ -950,10 +1064,12 @@ async function icuLoad(){
       o.textContent=lbl+' · '+(e.name||'Allenamento')+(e.moving_time?' · '+Math.round(e.moving_time/60)+"'":'');
       sel.appendChild(o);
     });
-    sel.style.display='';
+    sel.style.display='none';
+    await Lib.addIcuEvents(rides);
     const ti=rides.findIndex(e=>(e.start_date_local||'').slice(0,10)===today);
     if(ti>=0){sel.value=ti;await icuPick();}
-    else icuMsg(rides.length+' allenamenti trovati: scegline uno.');
+    else icuMsg(rides.length+' allenamenti salvati nella libreria.');
+    Lib.open('planned');
   }catch(e){icuErr(e);}
   finally{$('icuLoad').disabled=false;}
 }
@@ -969,7 +1085,7 @@ async function icuPick(){
     }
     const res=zwoToText(zwo);
     if(!res.name){res.name=e.name;if(e.name)res.text='# '+e.name+'\n'+res.text;}
-    applyImported(res,e.name||'Intervals.icu');
+    applyImported(res,e.name||'Intervals.icu',{source:'intervals',id:'icu-'+e.id,date:(e.start_date_local||'').slice(0,10)});
   }catch(err){
     if(err.message==='AUTH'||err instanceof TypeError)icuErr(err);
     else icuMsg('Impossibile convertire "'+(e.name||'')+'": '+err.message,true);
@@ -1684,10 +1800,11 @@ const Store={
   open(){
     return new Promise((ok,ko)=>{
       if(!('indexedDB' in window))return ko(new Error('IndexedDB non disponibile'));
-      const r=indexedDB.open('sofferenza',1);
+      const r=indexedDB.open('sofferenza',2);
       r.onupgradeneeded=()=>{const d=r.result;
         if(!d.objectStoreNames.contains('sessions'))d.createObjectStore('sessions',{keyPath:'id'});
-        if(!d.objectStoreNames.contains('live'))d.createObjectStore('live',{keyPath:'k'});};
+        if(!d.objectStoreNames.contains('live'))d.createObjectStore('live',{keyPath:'k'});
+        if(!d.objectStoreNames.contains('library'))d.createObjectStore('library',{keyPath:'id'});};
       r.onsuccess=()=>ok(r.result);r.onerror=()=>ko(r.error);
     });
   },
@@ -1850,6 +1967,149 @@ function initCalendar(){
   if(navigator.storage&&navigator.storage.persist)navigator.storage.persist().catch(()=>{});
 }
 
+/* ===== Libreria workout (menu stile Zwift) ===== */
+const SRC_LABEL={intervals:'Intervals.icu',file:'Importato',manual:'Scritto da te',preset:'Preimpostato'};
+function dayLabel(iso){
+  if(!iso)return '';
+  const today=dayKey(new Date()),tm=new Date();tm.setDate(tm.getDate()+1);
+  if(iso===today)return 'Oggi';if(iso===dayKey(tm))return 'Domani';
+  return new Date(iso+'T12:00:00').toLocaleDateString('it-CH',{weekday:'short',day:'numeric',month:'short'});
+}
+function zonesBar(z,total){
+  return z.map((s,i)=>s>0?'<i style="width:'+(s/total*100).toFixed(2)+'%;background:'+ZONE_COLORS[i]+'" title="Z'+(i+1)+' '+fmtTime(s)+'"></i>':'').join('');
+}
+
+const Lib={
+  tab:'planned',q:'',items:[],detail:null,
+  presets(){return Object.keys(PRESETS).map(k=>({id:'preset-'+k,name:k,text:PRESETS[k],source:'preset'}));},
+  async load(){
+    let mine=[];try{mine=await Store.all('library');}catch(e){}
+    this.items=mine.concat(this.presets());
+  },
+  async add(it){
+    if(!it||!it.text)return;
+    const rec={id:it.id||('w-'+Date.now()),name:it.name||woTitle(it.text),text:it.text,source:it.source||'manual',date:it.date||null,addedAt:Date.now()};
+    try{await Store.put('library',rec);}catch(e){}
+    await this.load();if($('dlgLib').open)this.render();
+    return rec;
+  },
+  async addIcuEvents(evs){
+    for(const e of evs){
+      if(!e.workout_file_base64)continue;
+      try{
+        const r=zwoToText(b64ToText(e.workout_file_base64));
+        const name=e.name||r.name||'Allenamento';
+        await Store.put('library',{id:'icu-'+e.id,name,text:r.name?r.text:'# '+name+'\n'+r.text,source:'intervals',date:(e.start_date_local||'').slice(0,10),addedAt:Date.now()});
+      }catch(err){}
+    }
+    await this.load();
+  },
+  async open(tab){
+    if(tab)this.tab=tab;
+    await this.load();
+    if(this.tab==='planned'&&!this.filtered().length&&!this.q)this.tab=this.items.some(i=>i.source!=='preset'&&i.source!=='intervals')?'mine':'preset';
+    this.detail=null;this.render();
+    if(!$('dlgLib').open)$('dlgLib').showModal();
+  },
+  filtered(){
+    const today=dayKey(new Date()),q=this.q.toLowerCase();
+    let a=this.items.filter(i=>!q||i.name.toLowerCase().includes(q));
+    if(this.tab==='planned')a=a.filter(i=>i.source==='intervals'&&(q||!i.date||i.date>=today)).sort((x,y)=>(x.date||'').localeCompare(y.date||''));
+    else if(this.tab==='mine')a=a.filter(i=>i.source!=='preset'&&i.source!=='intervals').sort((x,y)=>(y.addedAt||0)-(x.addedAt||0));
+    else if(this.tab==='preset')a=a.filter(i=>i.source==='preset');
+    else a=a.sort((x,y)=>(x.source==='preset')-(y.source==='preset')||(y.addedAt||0)-(x.addedAt||0));
+    return a;
+  },
+  card(it){
+    const wo=parseWorkout(it.text,S.ftp),e=woEstimate(wo,S.ftp);
+    const norm=t=>t.split('\n').filter(l=>!/^\s*#/.test(l)).map(l=>l.trim()).filter(Boolean).join('|');
+    const cur=norm(it.text)===norm($('woText').value);
+    const badge=it.source==='intervals'&&it.date?'<span class="badge'+(it.date===dayKey(new Date())?' today':' ic')+'">'+dayLabel(it.date)+'</span>':'';
+    return '<div class="wcard'+(cur?' cur':'')+'" data-id="'+esc(it.id)+'">'
+      +'<div class="nm" title="'+esc(it.name)+'">'+badge+esc(it.name)+'</div>'
+      +(wo.errors.length?'<div class="hint">Formato non valido</div>':profileSVG(wo,S.ftp,{h:70,gaps:false}))
+      +'<div class="mt"><span>⏱ <b>'+hm(e.dur)+'</b></span><span>TSS <b>'+e.tss+'</b></span><span>IF <b>'+e.IF.toFixed(2)+'</b></span>'
+      +(cur?'<span style="color:var(--ok)">● caricato</span>':'')+'</div></div>';
+  },
+  render(){
+    $('libFtp').textContent=S.ftp;
+    document.querySelectorAll('#libTabs button').forEach(b=>b.classList.toggle('on',b.dataset.t===this.tab));
+    const body=$('libBody');
+    if(this.detail)return this.renderDetail(this.detail);
+    const a=this.filtered();
+    if(!a.length){
+      body.innerHTML='<div class="libempty">'+(this.tab==='planned'
+        ?'Nessun allenamento pianificato.<br>Usa <b>"Carica allenamenti pianificati"</b> da Intervals.icu, oppure importa un file .zwo / .erg / .mrc.'
+        :this.tab==='mine'?'Ancora nessun workout tuo.<br>Importa un file o scrivi un workout e premi <b>"Salva nella libreria"</b>.':'Nessun risultato.')+'</div>';
+      return;
+    }
+    body.innerHTML='<div class="libgrid">'+a.map(it=>this.card(it)).join('')+'</div>';
+    body.querySelectorAll('.wcard').forEach(c=>c.onclick=()=>{this.detail=this.items.find(i=>i.id===c.dataset.id);this.render();});
+  },
+  renderDetail(it){
+    const wo=parseWorkout(it.text,S.ftp),e=woEstimate(wo,S.ftp),body=$('libBody');
+    const note=(it.text.match(/^\s*#.*$/gm)||[]).slice(1).map(l=>l.replace(/^\s*#\s*/,'')).join(' ');
+    let rows='';
+    wo.steps.forEach(s=>{
+      const z=zoneOf((s.p0+s.p1)/2,S.ftp),pc=v=>Math.round(v/S.ftp*100);
+      rows+='<tr><td><i class="sw" style="background:'+ZONE_COLORS[z-1]+'"></i>'+stepLabel(s)+'</td><td>'+fmtTime(s.dur)+'</td><td>'
+        +(s.p0===s.p1?Math.round(s.p0)+' W':Math.round(s.p0)+' → '+Math.round(s.p1)+' W')+'</td><td>'+(s.p0===s.p1?pc(s.p0)+'%':pc(s.p0)+'→'+pc(s.p1)+'%')+'</td><td>Z'+z+'</td></tr>';
+    });
+    body.innerHTML='<div class="libdet"><div class="top"><button id="libBack">◀ Indietro</button><h3>'
+      +(it.date?'<span class="badge'+(it.date===dayKey(new Date())?' today':' ic')+'">'+dayLabel(it.date)+'</span>':'')+esc(it.name)+'</h3>'
+      +'<span class="badge">'+(SRC_LABEL[it.source]||'')+'</span></div>'
+      +profileSVG(wo,S.ftp,{h:180,ftpLine:true}).replace('<svg ','<svg class="big" ')
+      +'<div class="zbar">'+zonesBar(e.zones,wo.total||1)+'</div>'
+      +'<div class="kp"><div><span>Durata</span><b>'+fmtTime(e.dur)+'</b></div><div><span>TSS stimato</span><b>'+e.tss+'</b></div><div><span>IF</span><b>'+e.IF.toFixed(2)+'</b></div>'
+      +'<div><span>NP stimata</span><b>'+e.np+' W</b></div><div><span>Intervalli</span><b>'+wo.steps.filter(s=>s.work).length+'</b></div><div><span>kJ circa</span><b>'+Math.round(wo.steps.reduce((a,s)=>a+(s.p0+s.p1)/2*s.dur,0)/1000)+'</b></div></div>'
+      +(note?'<p class="note">'+esc(note)+'</p>':'')
+      +'<div class="row" style="margin-top:6px"><button id="libLoad" class="primary">▶ Carica questo workout</button>'
+      +(it.source!=='preset'?'<button id="libDel" class="danger">Elimina dalla libreria</button>':'')+'<span class="hint" id="libMsg" style="margin:0"></span></div>'
+      +'<div class="steps"><table><thead><tr><th>Step</th><th>Durata</th><th>Watt</th><th>% FTP</th><th>Zona</th></tr></thead><tbody>'+rows+'</tbody></table></div></div>';
+    $('libBack').onclick=()=>{this.detail=null;this.render();};
+    $('libLoad').onclick=()=>this.loadItem(it);
+    if($('libDel'))$('libDel').onclick=async()=>{
+      const b=$('libDel');if(b.dataset.c!=='1'){b.dataset.c='1';b.textContent='Sicuro? Clicca di nuovo';return;}
+      try{await Store.del('library',it.id);}catch(e){}
+      await this.load();this.detail=null;this.render();
+    };
+  },
+  loadItem(it){
+    if(S.running){$('libMsg').textContent='Termina la sessione in corso prima di cambiare workout.';return;}
+    if(S.mode!=='workout')setMode('workout');
+    const body=it.text.split('\n').filter(l=>!/^\s*#/.test(l)).join('\n').trim();
+    const notes=(it.text.match(/^\s*#.*$/gm)||[]).slice(1).join('\n');
+    $('woText').value='# '+it.name+'\n'+(notes?notes+'\n':'')+body;$('preset').value='';readInputs();
+    $('dlgLib').close();
+    msg('Caricato: '+it.name);
+    $('ride').scrollIntoView({behavior:'smooth',block:'start'});
+  },
+  init(){
+    $('btnLib').onclick=()=>this.open();
+    $('libClose').onclick=()=>$('dlgLib').close();
+    $('dlgLib').addEventListener('click',e=>{if(e.target===$('dlgLib'))$('dlgLib').close();});
+    document.querySelectorAll('#libTabs button').forEach(b=>b.onclick=()=>{this.tab=b.dataset.t;this.detail=null;this.render();});
+    $('libSearch').oninput=e=>{this.q=e.target.value.trim();this.detail=null;this.render();};
+    $('btnLibSave').onclick=async()=>{
+      const t=$('woText').value;
+      if(!t.trim()||S.wo.errors.length||!S.wo.steps.length){$('libSaveMsg').textContent='Il workout non è valido.';return;}
+      const r=await this.add({name:woTitle(t,'Workout personalizzato'),text:t,source:'manual'});
+      $('libSaveMsg').textContent='✓ Salvato come "'+r.name+'"';
+    };
+    this.load();
+  }
+};
+
+function renderWoProfile(){
+  const wo=S.wo,box=$('woProfile');if(!box)return;
+  $('woName').textContent=wo.steps.length?woTitle($('woText').value,'Workout personalizzato'):'Nessun workout caricato';
+  if(!wo.steps.length){box.innerHTML='<div class="libempty">Apri la <b>Libreria workout</b> per sceglierne uno.</div>';$('woZones').innerHTML='';return;}
+  const e=woEstimate(wo,S.ftp);
+  box.innerHTML=profileSVG(wo,S.ftp,{h:120,ftpLine:true});
+  $('woZones').innerHTML=zonesBar(e.zones,wo.total||1);
+  $('woInfo').textContent=fmtTime(wo.total)+' · TSS '+e.tss+' · IF '+e.IF.toFixed(2)+' · '+wo.steps.filter(s=>s.work).length+' intervalli';
+}
+
 /* ---- modalità ---- */
 function setMode(m){
   if(S.running){msg('Termina la sessione prima di cambiare modalità.');return;}
@@ -1924,7 +2184,7 @@ function init(){
   $('icuList').addEventListener('change',icuPick);
   $('woFile').addEventListener('change',async e=>{
     const f=e.target.files[0];if(!f)return;
-    try{applyImported(importWorkoutFile(f.name,await f.text(),S.ftp),f.name);}
+    try{applyImported(importWorkoutFile(f.name,await f.text(),S.ftp),f.name.replace(/\.(zwo|erg|mrc)$/i,''),{source:'file'});}
     catch(err){icuMsg('File non valido: '+err.message,true);}
     e.target.value='';
   });
@@ -1946,6 +2206,7 @@ function init(){
   renderStats();renderIntervals();
   initCloudUi();Cloud.init().then(()=>renderCalendar()).catch(()=>{});
   initCalendar();
+  Lib.init();renderWoProfile();
   setInterval(update,250);
   requestAnimationFrame(draw);
 }
